@@ -102,6 +102,12 @@ class LRU : public Base
     ReplaceableEntry* getVictim(const ReplacementCandidates& candidates) const
                                                                      override;
 
+    
+    // Returns a sorted vector of all entries in the cache, sorted in ascending order of last use.
+    std::vector<ReplaceableEntry*>
+    getVictimVector(const ReplacementCandidates& candidates);
+    static bool compare_touch_times(ReplaceableEntry* a, ReplaceableEntry* b);
+    
     /**
      * Instantiate a replacement data entry.
      *
