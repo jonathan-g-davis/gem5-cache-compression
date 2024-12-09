@@ -531,3 +531,14 @@ class PIFPrefetcher(QueuedPrefetcher):
         if not isinstance(simObj, SimObject):
             raise TypeError("argument must be of SimObject type")
         self.addEvent(HWPProbeEventRetiredInsts(self, simObj,"RetiredInstsPC"))
+
+    class GlobalCompressionPredictor(SimObject):
+        type = 'GlobalCompressionPredictor'
+        cxx_class = 'gem5::prefetch::GlobalCompressionPredictor'
+        cxx_header = "mem/cache/prefetch/global_compression_predictor.hh"
+        counter_bits = Param.Unsigned(19,
+            "Number of bits in the saturating counter")
+        decompression_latency = Param.Unsigned(5,
+            "Nmber of cycles to decompress a cache line")
+        miss_penalty = Param.Unsigned(400,
+            "Number of cycles penalty incurred on cache miss")

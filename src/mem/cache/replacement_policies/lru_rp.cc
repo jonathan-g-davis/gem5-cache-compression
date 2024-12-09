@@ -91,6 +91,26 @@ LRU::getVictim(const ReplacementCandidates& candidates) const
     return victim;
 }
 
+bool LRU::compare_touch_times(ReplaceableEntry* a, ReplaceableEntry* b)
+{
+    if (std::static_pointer_cast<LRUReplData>(a->replacementData)->lastTouchTick > std::static_pointer_cast<LRUReplData>(a->replacementData)->lastTouchTick)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+std::vector<ReplaceableEntry*>
+LRU::getVictimVector(const ReplacementCandidates& candidates)
+{
+    std::vector<ReplaceableEntry*> victims = candidates;
+    std::sort(victims.begin(), victims.end(), LRU::compare_touch_times);       // sorting in place.
+    return victims;
+}
+
 std::shared_ptr<ReplacementData>
 LRU::instantiateEntry()
 {
