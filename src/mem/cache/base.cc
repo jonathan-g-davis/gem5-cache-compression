@@ -1239,6 +1239,13 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                 "Should never see a write in a read-only cache %s\n",
                 name());
 
+    if (compressionPredictor) {
+        CompressedTags *compressedTags = static_cast<CompressedTags*>(tags);
+        prefetch::GlobalCompressionPredictor::HitResult accessResult =
+            compressedTags->classifyAccess(pkt);
+        compressionPredictor->update(accessResult);
+    }
+
     // Access block in the tags
     Cycles tag_latency(0);
     blk = tags->accessBlock(pkt, tag_latency);
