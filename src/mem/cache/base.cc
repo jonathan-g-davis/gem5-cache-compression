@@ -83,6 +83,7 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
       mshrQueue("MSHRs", p.mshrs, 0, p.demand_mshr_reserve, p.name),
       writeBuffer("write buffer", p.write_buffers, p.mshrs, p.name),
       tags(p.tags),
+      compressionPredictor(p.compressionPredictor),
       compressor(p.compressor),
       prefetcher(p.prefetcher),
       writeAllocator(p.write_allocator),
@@ -985,9 +986,12 @@ BaseCache::updateCompressionData(CacheBlk *&blk, const uint64_t* data,
     // metadata can be updated.
     Cycles compression_lat = Cycles(0);
     Cycles decompression_lat = Cycles(0);
-    const auto comp_data =
-        compressor->compress(data, compression_lat, decompression_lat);
-    std::size_t compression_size = comp_data->getSizeBits();
+    std::size_t compression_size = blkSize * 8;
+    if ((compressionPredictor == nullptr) || compressionPredictor->shouldCompress()) {
+        const auto comp_data =
+            compressor->compress(data, compression_lat, decompression_lat);
+        compression_size = comp_data->getSizeBits();
+    }
 
     // Get previous compressed size
     CompressionBlk* compression_blk = static_cast<CompressionBlk*>(blk);
@@ -1623,9 +1627,11 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     // calculate the amount of extra cycles needed to read or write compressed
     // blocks.
     if (compressor && pkt->hasData()) {
-        const auto comp_data = compressor->compress(
-            pkt->getConstPtr<uint64_t>(), compression_lat, decompression_lat);
-        blk_size_bits = comp_data->getSizeBits();
+        if ((compressionPredictor == nullptr) || compressionPredictor->shouldCompress()) {
+            const auto comp_data = compressor->compress(
+                pkt->getConstPtr<uint64_t>(), compression_lat, decompression_lat);
+            blk_size_bits = comp_data->getSizeBits();
+        }
     }
 
     // Find replacement victim

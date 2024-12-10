@@ -106,6 +106,7 @@ class BaseCache(ClockedObject):
     replacement_policy = Param.BaseReplacementPolicy(LRURP(),
         "Replacement policy")
 
+    compressionPredictor = Param.GlobalCompressionPredictor(NULL, "Compression predictor")
     compressor = Param.BaseCacheCompressor(NULL, "Cache compressor.")
     replace_expansions = Param.Bool(True, "Apply replacement policy to " \
         "decide which blocks should be evicted on a data expansion")

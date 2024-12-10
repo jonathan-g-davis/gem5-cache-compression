@@ -60,6 +60,7 @@
 #include "enums/Clusivity.hh"
 #include "mem/cache/cache_blk.hh"
 #include "mem/cache/compressors/base.hh"
+#include "mem/cache/prefetch/global_compression_predictor.hh"
 #include "mem/cache/mshr_queue.hh"
 #include "mem/cache/tags/base.hh"
 #include "mem/cache/write_queue.hh"
@@ -348,6 +349,9 @@ class BaseCache : public ClockedObject
 
     /** Tag and data Storage */
     BaseTags *tags;
+
+    /** Saturating counter for adaptive cache compression */
+    prefetch::GlobalCompressionPredictor *compressionPredictor;
 
     /** Compression method being used. */
     compression::Base* compressor;
