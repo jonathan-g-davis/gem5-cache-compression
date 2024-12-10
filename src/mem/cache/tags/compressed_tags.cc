@@ -36,6 +36,7 @@
 #include "base/trace.hh"
 #include "debug/CacheComp.hh"
 #include "mem/cache/replacement_policies/base.hh"
+#include "mem/cache/replacement_policies/lru_rp.hh"
 #include "mem/cache/replacement_policies/replaceable_entry.hh"
 #include "mem/cache/tags/indexing_policies/base.hh"
 #include "mem/packet.hh"
@@ -98,6 +99,65 @@ CompressedTags::tagsInit()
 
         // Link block to indexing policy
         indexingPolicy->setEntry(superblock, superblock_index);
+    }
+}
+
+prefetch::GlobalCompressionPredictor::HitResult
+CompressedTags::classifyAccess(const PacketPtr pkt)
+{
+    const auto MAX_UNCOMPRESSED_LINES = 4;
+    const auto SET_SIZE = 8;
+
+    // Get address
+    const Addr addr = pkt->getAddr();
+    // Get secure bit
+    const bool is_secure = pkt->isSecure();
+    // Extract tag
+    const Addr tag = extractTag(addr);
+
+    // Get all possible locations of this superblock
+    const std::vector<ReplaceableEntry*> superblock_entries =
+        indexingPolicy->getPossibleEntries(addr);
+
+    // Extract LRU stack
+    const std::vector<ReplaceableEntry*> lru_stack =
+        static_cast<replacement_policy::LRU*>(replacementPolicy)->getVictimVector(superblock_entries);
+
+    // Looping through the stack to calculate cumulative compressed size
+    std::size_t cumulative_size = 0;
+    int depth = 0;
+    for (const auto& entry: lru_stack) {
+        depth++;
+        SuperBlk* superblock = static_cast<SuperBlk*>(entry);
+        if (!superblock->matchTag(tag, is_secure)) {
+            for (const auto subentry: superblock->blks) {
+                CompressionBlk* subblock = static_cast<CompressionBlk*>(subentry);
+                cumulative_size += subblock->getSizeBits();
+            }
+        } else {
+            break;
+        }
+    }
+
+    // Find the block
+    CompressionBlk *blk = static_cast<CompressionBlk*>(findBlock(addr, is_secure));
+
+    // If a cache hit
+    if (blk != nullptr) {
+        if (depth < MAX_UNCOMPRESSED_LINES && !blk->isCompressed()) {
+            return prefetch::GlobalCompressionPredictor::HitResult::UnpenalizedHit;
+        } else if (depth < MAX_UNCOMPRESSED_LINES && blk->isCompressed()) {
+            return prefetch::GlobalCompressionPredictor::HitResult::PenalizedHit;
+        } else {
+            return prefetch::GlobalCompressionPredictor::HitResult::AvoidedMiss;
+        }
+    // If a cache miss
+    } else {
+        if (cumulative_size < SET_SIZE) {
+            return prefetch::GlobalCompressionPredictor::HitResult::AvoidableMiss;
+        } else {
+            return prefetch::GlobalCompressionPredictor::HitResult::UnavoidableMiss;
+        }
     }
 }
 

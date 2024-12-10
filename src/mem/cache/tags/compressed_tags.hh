@@ -38,6 +38,7 @@
 
 #include "mem/cache/tags/sector_tags.hh"
 #include "mem/cache/tags/super_blk.hh"
+#include "mem/cache/prefetch/global_compression_predictor.hh"
 
 namespace gem5
 {
@@ -93,6 +94,8 @@ class CompressedTags : public SectorTags
      * Initialize blocks as SuperBlk and CompressionBlk instances.
      */
     void tagsInit() override;
+
+    prefetch::GlobalCompressionPredictor::HitResult classifyAccess(const PacketPtr pkt);
 
     /**
      * Find replacement victim based on address. Checks if data can be co-
