@@ -128,6 +128,9 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
     if (prefetcher)
         prefetcher->setCache(this);
 
+    fatal_if(compressionPredictor && !compressor,
+        "Cache %s has compression predictor specified but no compressor",
+        name());
     fatal_if(compressor && !dynamic_cast<CompressedTags*>(tags),
         "The tags of compressed cache %s must derive from CompressedTags",
         name());
@@ -1239,6 +1242,8 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                 "Should never see a write in a read-only cache %s\n",
                 name());
 
+    // Update compression predictor prior to "accessing" tags to use the state
+    // prior to it being updated by the access.
     if (compressionPredictor) {
         CompressedTags *compressedTags = static_cast<CompressedTags*>(tags);
         prefetch::GlobalCompressionPredictor::HitResult accessResult =
