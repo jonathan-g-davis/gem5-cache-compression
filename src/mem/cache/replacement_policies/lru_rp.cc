@@ -93,14 +93,10 @@ LRU::getVictim(const ReplacementCandidates& candidates) const
 
 bool LRU::compare_touch_times(ReplaceableEntry* a, ReplaceableEntry* b)
 {
-    if (std::static_pointer_cast<LRUReplData>(a->replacementData)->lastTouchTick > std::static_pointer_cast<LRUReplData>(a->replacementData)->lastTouchTick)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    Tick aLastTouchTick = std::static_pointer_cast<LRUReplData>(a->replacementData)->lastTouchTick;
+    Tick bLastTouchTick = std::static_pointer_cast<LRUReplData>(b->replacementData)->lastTouchTick;
+
+    return aLastTouchTick > bLastTouchTick;
 }
 
 std::vector<ReplaceableEntry*>

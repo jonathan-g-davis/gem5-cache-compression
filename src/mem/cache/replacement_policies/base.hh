@@ -110,8 +110,6 @@ class Base : public SimObject
      * @return A shared pointer to the new replacement data.
      */
     virtual std::shared_ptr<ReplacementData> instantiateEntry() = 0;
-
-    virtual std::vector<ReplaceableEntry*> getVictimVector(const ReplacementCandidates& candidates) = 0;
 };
 
 } // namespace replacement_policy
