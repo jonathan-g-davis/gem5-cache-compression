@@ -157,9 +157,9 @@ class FPC(BaseDictionaryCompressor):
     cxx_header = "mem/cache/compressors/fpc.hh"
 
     comp_chunks_per_cycle = 8
-    comp_extra_latency = 1
+    comp_extra_latency = 3
     decomp_chunks_per_cycle = 4
-    decomp_extra_latency = 1
+    decomp_extra_latency = 5
 
     # Dummy dictionary size, since FPC has no dictionary
     dictionary_size = 1
