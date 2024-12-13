@@ -107,6 +107,7 @@ CompressedTags::classifyAccess(const PacketPtr pkt)
 {
     const auto MAX_UNCOMPRESSED_LINES = 4;
     const auto SET_SIZE = 8;
+    const auto BLOCK_SIZE = 64;
 
     // Get address
     const Addr addr = pkt->getAddr();
@@ -129,7 +130,7 @@ CompressedTags::classifyAccess(const PacketPtr pkt)
     for (const auto& entry: lru_stack) {
         depth++;
         SuperBlk* superblock = static_cast<SuperBlk*>(entry);
-        if (!superblock->matchTag(tag, is_secure)) {
+        if ((superblock->getTag() == tag) && (superblock->isSecure() == is_secure)) {
             for (const auto subentry: superblock->blks) {
                 CompressionBlk* subblock = static_cast<CompressionBlk*>(subentry);
                 cumulative_size += subblock->getSizeBits();
@@ -144,16 +145,16 @@ CompressedTags::classifyAccess(const PacketPtr pkt)
 
     // If a cache hit
     if (blk != nullptr) {
-        if (depth < MAX_UNCOMPRESSED_LINES && !blk->isCompressed()) {
+        if (depth <= MAX_UNCOMPRESSED_LINES && !blk->isCompressed()) {
             return prefetch::GlobalCompressionPredictor::HitResult::UnpenalizedHit;
-        } else if (depth < MAX_UNCOMPRESSED_LINES && blk->isCompressed()) {
+        } else if (depth <= MAX_UNCOMPRESSED_LINES && blk->isCompressed()) {
             return prefetch::GlobalCompressionPredictor::HitResult::PenalizedHit;
         } else {
             return prefetch::GlobalCompressionPredictor::HitResult::AvoidedMiss;
         }
     // If a cache miss
     } else {
-        if (cumulative_size < SET_SIZE) {
+        if (cumulative_size < (SET_SIZE * BLOCK_SIZE * 8)) {
             return prefetch::GlobalCompressionPredictor::HitResult::AvoidableMiss;
         } else {
             return prefetch::GlobalCompressionPredictor::HitResult::UnavoidableMiss;
