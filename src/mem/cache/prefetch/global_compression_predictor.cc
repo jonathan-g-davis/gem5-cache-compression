@@ -59,6 +59,42 @@ GlobalCompressionPredictor::update(
             fatal("unreachable case");
             break;
     }
+
+    // Update statistics
+    switch (result) {
+        case GlobalCompressionPredictor::HitResult::UnpenalizedHit:
+            unpenalizedHits++;
+            break;
+        case GlobalCompressionPredictor::HitResult::PenalizedHit:
+            penalizedHits++;
+            break;
+        case GlobalCompressionPredictor::HitResult::AvoidedMiss:
+            avoidedMisses++;
+            break;
+        case GlobalCompressionPredictor::HitResult::AvoidableMiss:
+            avoidableMisses++;
+            break;
+        case GlobalCompressionPredictor::HitResult::UnavoidableMiss:
+            unavoidableMisses++;
+            break;
+    }
+}
+
+void
+GlobalCompressionPredictor::regStats()
+{
+    statistics::Group::regStats();
+
+    unpenalizedHits.name(name() + ".unpenalizedHits")
+        .desc("Number of unpenalized hits");
+    penalizedHits.name(name() + ".penalizedHits")
+        .desc("Number of penalized hits");
+    avoidedMisses.name(name() + ".avoidedMisses")
+        .desc("Number of avoided misses");
+    avoidableMisses.name(name() + ".avoidableMisses")
+        .desc("Number of avoidable misses");
+    unavoidableMisses.name(name() + ".unavoidableMisses")
+        .desc("Number of unavoidable misses");
 }
 
 } // namespace prefetch

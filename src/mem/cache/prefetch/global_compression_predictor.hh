@@ -2,6 +2,7 @@
 #define __MEM_CACHE_PREFETCH_GLOBAL_COMPRESSION_PREDICTOR_HH
 
 #include "base/sat_counter.hh"
+#include "base/statistics.hh"
 #include "base/types.hh"
 #include "sim/sim_object.hh"
 
@@ -88,6 +89,14 @@ class GlobalCompressionPredictor : public SimObject
      * -262,144.
      */
     GenericSatCounter<int32_t> counter;
+
+    Stats::Scalar unpenalizedHits;
+    Stats::Scalar penalizedHits;
+    Stats::Scalar avoidedMisses;
+    Stats::Scalar avoidableMisses;
+    Stats::Scalar unavoidableMisses;
+
+    void regStats() override;
 };
 
 } // namespace prefetch
